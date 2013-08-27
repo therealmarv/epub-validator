@@ -42,7 +42,7 @@ def err(msg):
 
 startpath = '.'
 regex_html_file = '^.*\.x?html?$' # TODO: Lower-/Uppercase
-regex_misc_file = '^.*(\.x?html?$' # negate! # TODO: Lower-/Uppercase
+regex_misc_file = '^.*\.x?html?$' # negate! # TODO: Lower-/Uppercase
 
 # =================================
 
@@ -145,31 +145,12 @@ def getmapped_opf_misc():
 
 # =================================
 
-#TODO
-
-# gets all OPFs from container
-# negate is needed because you cannot negative regex :(
-# returns all [href, OPF_filename] which matches a regex pattern
-def _getmapped_opf_regex_files(regex, negate=False):
-    opf_files = []
-    for opf in getcontainer_opfs():
-        opf = path.relpath(opf)
-        found_files = lxml.etree.parse(opf).xpath("//o:item[not(@properties = 'nav')]/@href", namespaces={'o': 'http://www.idpf.org/2007/opf'})
-        if len(found_files) < 1:
-            err('ERROR: No referenced files found in: ' + opf)
-            sys.exit(1)
-        for found_file in found_files:
-            if ((re.match(regex, found_file) and not(negate)) \
-            or (not(re.match(regex, found_file)) and negate)):
-                found_file = path.relpath(path.join(path.dirname(opf), found_file))
-                opf_files.append([found_file, opf])
-    return opf_files # convert_to_relpaths(opf_files) # TODO for two arrays
-
-# =================================
 
 def main():
     # print getmapped_opf_images()
-    print getmapped_opf_images()
+    print getmapped_opf_htmls()
+    print '==================='
+    print getmapped_opf_misc()
 
 # =================================
 

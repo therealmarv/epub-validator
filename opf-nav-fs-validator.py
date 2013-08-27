@@ -42,8 +42,7 @@ def err(msg):
 
 startpath = '.'
 regex_html_file = '^.*\.x?html?$' # TODO: Lower-/Uppercase
-regex_image_file = '^.*\.(jpg|jpeg|gif|png)$' # TODO: Lower-/Uppercase
-regex_misc_file = '^.*(\.(x?html?|jpg|jpeg|gif|png))$' # negate # TODO: Lower-/Uppercase
+regex_misc_file = '^.*(\.x?html?$' # negate! # TODO: Lower-/Uppercase
 
 # =================================
 
@@ -141,13 +140,8 @@ def getmapped_opf_htmls():
 
 # =================================
 
-def getmapped_opf_images():
-    return _getmapped_opf_regex_files(regex_image_file)
-
-# =================================
-
 def getmapped_opf_misc():
-    return _getmapped_opf_regex_files(regex_misc_file)
+    return _getmapped_opf_regex_files(regex_misc_file, negate=True)
 
 # =================================
 

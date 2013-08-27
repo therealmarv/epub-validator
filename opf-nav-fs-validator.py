@@ -128,7 +128,8 @@ def _getmapped_opf_regex_files(regex, negate=False):
             err('ERROR: No referenced files found in: ' + opf)
             sys.exit(1)
         for found_file in found_files:
-            if re.match(regex, found_file) and not(negate): # TODO: Wenn negate true dann soll re.match anders herum wirken
+            if ((re.match(regex, found_file) and not(negate)) /
+            or (not(re.match(regex, found_file) and negate):
                 found_file = path.relpath(path.join(path.dirname(opf), found_file))
                 opf_files.append([found_file, opf])
     return opf_files # convert_to_relpaths(opf_files) # TODO for two arrays
@@ -165,7 +166,7 @@ def _getmapped_opf_regex_files(regex, negate=False):
             sys.exit(1)
         for found_file in found_files:
             if ((re.match(regex, found_file) and not(negate)) /
-                or (not(re.match(regex, found_file)) and negate):
+            or (not(re.match(regex, found_file)) and negate):
                 found_file = path.relpath(path.join(path.dirname(opf), found_file))
                 opf_files.append([found_file, opf])
     return opf_files # convert_to_relpaths(opf_files) # TODO for two arrays

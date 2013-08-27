@@ -147,9 +147,6 @@ def getmapped_opf_misc():
 
 
 def main():
-    # print getmapped_opf_images()
-    print getmapped_opf_htmls()
-    print '==================='
     print getmapped_opf_misc()
 
 # =================================

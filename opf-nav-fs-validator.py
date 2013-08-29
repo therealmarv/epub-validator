@@ -112,8 +112,22 @@ def getmapped_navs():
         elif len(found_navs) > 1:
             err('ERROR: More than one nav found in OPF: ' + opf)
             sys.exit(1)
-        nav_htmls.append(found_navs[0])
+        nav_htmls.append(path.join(path.dirname(opf), found_navs[0]))
     return convert_to_relpaths(nav_htmls)
+
+# =================================
+
+def get_nav_htmls():
+    nav_files = []
+    for nav in getmapped_navs():
+        found_files = lxml.html.parse(nav).xpath('//a/@href')
+        if (len(found_files) < 1):
+            err('ERROR: No referenced files found in: ' + nav)
+            sys.exit(1)
+        for found_file in found_files:
+            found_file = path.relpath(path.join(path.dirname(nav), found_file))
+            nav_files.append([found_file, nav])
+    return nav_files # TODO: NAV and OPF file in third array place and convert_to_relpaths 
 
 # =================================
 
@@ -145,12 +159,28 @@ def getmapped_opf_misc():
 
 # =================================
 
+# gets all NAVs from opfs and returns all [href, nav_filename, opf_filename] which matches a regex pattern.
+# regex is not really needed because it seems only HTMLs are in the nav inside.
+def _getmapped_nav_regex_files(regex, negate=False):
+    nav_files = []
+    for nav in getmapped_navs():
+        found_files = lxml.html.parse(nav).xpath('//a/@href')
+        if len(found_files) < 1:
+            err('ERROR: No referenced files found in: ' + nav)
+            sys.exit(1)
+        for found_file in found_files:
+            if ((re.match(regex, found_file) and not(negate)) \
+            or (not(re.match(regex, found_file)) and negate)):
+                found_file = path.relpath(path.join(path.dirname(nav), found_file))
+                nav_files.append([found_file, nav])
+    return nav_files # TODO: OPF file in third array place and convert_to_relpaths
+
+def getmapped_nav_htmls():
+    return _getmapped_nav_regex_files(regex_html_file)
 
 def main():
-    # print getmapped_opf_images()
-    print getmapped_opf_htmls()
-    print '==================='
-    print getmapped_opf_misc()
+    #print getmapped_nav_htmls()
+    print get_nav_htmls()
 
 # =================================
 

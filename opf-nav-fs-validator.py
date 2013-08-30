@@ -208,22 +208,25 @@ def main():
     html_mapped_one_dimension = []
     for a, b in getmapped_htmls():
         html_mapped_one_dimension.append(a)
-    html_mapped = set(html_mapped_one_dimension).intersect(getmapped_navs())
+    html_mapped_one_dimension = convert_to_relpaths(html_mapped_one_dimension)
+    html_mapped = set(html_mapped_one_dimension)
     info('=== HTML files missing on filesystem:')
     for missing in html_mapped.difference(html_fs):
         if not(path.isfile(missing)):
             print(missing)
-    info('=== HTML files not mapped in NAV (please ignore navs itself!):')
-    for missing in html_fs.difference(html_mapped):
+    info('=== HTML files not mapped in NAV:')
+    for missing in (html_fs.difference(html_mapped)).difference(set(getmapped_navs())): # fs - mapped - navs
         print(missing)
 
     infog('Analyzing image/external files....')
     images_mapped_one_dimension = []
     for a, b in getmapped_html_images():
         images_mapped_one_dimension.append(a)
-    imaged_mapped = set(images_mapped_one_dimension)
+    images_mapped = set(images_mapped_one_dimension)
     info('=== image files missing on filesystem:')
-
+    for missing in images_mapped:
+        if not(path.isfile(missing)):
+            print(missing)
 
 # =================================
 

@@ -54,7 +54,8 @@ def convert_to_relpaths(filelist):
 
 # =================================
 
-def getcontainer_opfs():
+# get opfs mapped in container.xml
+def getmapped_opfs():
     container_file = path.join(startpath, 'META-INF', 'container.xml')
     if not(path.isfile(container_file)):
         err('ERROR: META-INF/container.xml was not found! Not valid EPUB!')
@@ -96,16 +97,19 @@ def getfs_htmls():
     for root, dirnames, filenames in os.walk('.'):
       for filename in fnmatch.filter(filenames, '*html'):
           fs_htmls.append(os.path.join(root, filename))
-    if (len(fs_navs) < 1):
+    if (len(fs_htmls) < 1):
         err('ERROR: No HTMLs found in filesystem. This should not happen!')
         sys.exit(1)
-    return convert_to_relpaths(fs_navs)
+    return convert_to_relpaths(fs_htmls)
 
 # =================================
 
 def getmapped_navs():
     nav_htmls = []
-    for opf in getcontainer_opfs():
+    for opf in getmapped_opfs():
+        if not(path.isfile(opf)):
+            warn('WARNING: OPF file {0} not found. It will be ignored.'.format(opf))
+            continue
         found_navs = lxml.etree.parse(opf).xpath("//o:item[@properties = 'nav']/@href", namespaces={'o': 'http://www.idpf.org/2007/opf'})
         if len(found_navs) < 1:
             err('ERROR: No nav found in OPF: ' + opf)
@@ -119,7 +123,7 @@ def getmapped_navs():
 # =================================
 
 # get all htmls which are mapped by nav file
-def get_nav_htmls():
+def getmapped_htmls():
     nav_files = []
     for nav in getmapped_navs():
         found_files = lxml.html.parse(nav).xpath('//a/@href')
@@ -136,7 +140,7 @@ def get_nav_htmls():
 # gets all OPFs from container and returns all [href, OPF_filename] which matches a regex pattern
 def _getmapped_opf_regex_files(regex, negate=False):
     opf_files = []
-    for opf in getcontainer_opfs():
+    for opf in getmapped_opfs():
         opf = path.relpath(opf)
         found_files = lxml.etree.parse(opf).xpath("//o:item[not(@properties = 'nav')]/@href", namespaces={'o': 'http://www.idpf.org/2007/opf'})
         if len(found_files) < 1:
@@ -165,7 +169,7 @@ def getmapped_opf_misc():
 # regex is not really needed because we only support images at the moment
 def _getmapped_html_regex_files(regex, negate=False):
     img_files = []
-    for html, nav in get_nav_htmls():
+    for html, nav in getmapped_htmls():
         found_files = lxml.html.parse(html).xpath('//img/@src')
         for found_file in found_files:
             if ((re.match(regex, found_file) and not(negate)) \
@@ -178,7 +182,40 @@ def getmapped_html_images():
     return _getmapped_html_regex_files(regex_no_external_images, negate=True)
 
 def main():
-    print getmapped_html_images()
+    infog('Analyzing OPFs...')
+    opf_fs = set(getfs_opfs())
+    opf_mapped = set(getmapped_opfs())
+    info('=== OPF files missing on filesystem:')
+    for missing in opf_mapped.difference(opf_fs):
+        print(missing)
+    info('=== OPF files not mapped in container.xml:')
+    for missing in opf_fs.difference(opf_mapped):
+        print(missing)
+
+    infog('Analyzing NAVs...')
+    nav_fs = set(getfs_navs())
+    nav_mapped = set(getmapped_navs())
+    info('=== NAV files missing on filesystem:')
+    for missing in nav_mapped.difference(nav_fs):
+        if not(path.isfile(missing)):
+            print(missing)
+    info('=== NAV files not mapped OPF:')
+    for missing in nav_fs.difference(nav_mapped):
+        print(missing)
+
+    infog('Analyzing HTMLs....')
+    html_fs = set(getfs_htmls())
+    html_mapped_one_dimension = []
+    for a, b in getmapped_htmls():
+        html_mapped_one_dimension.append(a)
+    html_mapped = set(html_mapped_one_dimension)
+    info('=== HTML files missing on filesystem:')
+    for missing in html_mapped.difference(html_fs):
+        if not(path.isfile(missing)):
+            print(missing)
+    info('=== HTML files not mapped in NAV:')
+    for missing in html_fs.difference(html_mapped):
+        print(missing)
 
 # =================================
 

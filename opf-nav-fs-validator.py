@@ -43,6 +43,7 @@ def err(msg):
 startpath = '.'
 regex_html_file = '^.*\.x?html?$' # TODO: Lower-/Uppercase
 regex_misc_file = '^.*\.x?html?$' # negate! # TODO: Lower-/Uppercase
+regex_no_external_images = '^http://.*$' # negate!
 
 # =================================
 
@@ -117,6 +118,7 @@ def getmapped_navs():
 
 # =================================
 
+# get all htmls which are mapped by nav file
 def get_nav_htmls():
     nav_files = []
     for nav in getmapped_navs():
@@ -159,54 +161,24 @@ def getmapped_opf_misc():
 
 # =================================
 
-# gets all NAVs from opfs and returns all [href, nav_filename, opf_filename] which matches a regex pattern.
-# regex is not really needed because it seems only HTMLs are in the nav inside.
-def _getmapped_nav_regex_files(regex, negate=False):
-    nav_files = []
-    for nav in getmapped_navs():
-        found_files = lxml.html.parse(nav).xpath('//a/@href')
-        if len(found_files) < 1:
-            err('ERROR: No referenced files found in: ' + nav)
-            sys.exit(1)
+# gets all files from html in NAVs from opfs and returns all [img @src, nav_filename, opf_filename] which matches a regex pattern.
+# regex is not really needed because we only support images at the moment
+def _getmapped_html_regex_files(regex, negate=False):
+    img_files = []
+    for html, nav in get_nav_htmls():
+        found_files = lxml.html.parse(html).xpath('//img/@src')
         for found_file in found_files:
             if ((re.match(regex, found_file) and not(negate)) \
             or (not(re.match(regex, found_file)) and negate)):
-                found_file = path.relpath(path.join(path.dirname(nav), found_file))
-                nav_files.append([found_file, nav])
-    return nav_files # TODO: OPF file in third array place and convert_to_relpaths
+                found_file = path.relpath(path.join(path.dirname(html), found_file))
+                img_files.append([found_file, html])
+    return img_files # TODO: OPF file in third array place and convert_to_relpaths
 
-def getmapped_nav_htmls():
-    return _getmapped_nav_regex_files(regex_html_file)
+def getmapped_html_images():
+    return _getmapped_html_regex_files(regex_no_external_images, negate=True)
 
 def main():
-    #print getmapped_nav_htmls()
-    print get_nav_htmls()
-
-# =================================
-
-def oldmain():
-    # nav_matches contains all found *nav*html files. Useful later for checking against opf files
-    nav_matches = []
-    for root, dirnames, filenames in os.walk('.'):
-      for filename in fnmatch.filter(filenames, '*nav*html'):
-          nav_matches.append(os.path.join(root, filename))
-
-    # Check if all files in nav files exist and check if images exist
-    for nav_file in nav_matches:
-        print '====== Analysing navigation HTML: ' + nav_file
-        nav_htmls = lxml.html.parse(nav_file).xpath("//a/@href")
-        for nav_html in nav_htmls:
-            nav_html = os.path.join(os.path.dirname(nav_file), nav_html)
-            if not(os.path.isfile(nav_html)):
-                err('HTML file {0} in {1} does not exist!'.format(nav_html, os.path.basename(nav_file)))
-                continue
-            #print '----- Analysing: ' + nav_html
-            img_links = lxml.html.parse(nav_html).xpath("//img/@src")
-            for img_link in img_links:
-                img_file = os.path.join(os.path.dirname(nav_html), img_link)
-                if not(os.path.isfile(img_file)):
-                    err('Image file {0} in {1} does not exist!'.format(img_file, nav_html))
-                    continue
+    print getmapped_html_images()
 
 # =================================
 
